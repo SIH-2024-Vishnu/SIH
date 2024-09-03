@@ -9,15 +9,13 @@ const { Contributor, Investor, Admin, Idea, Sector } = require('./mongodb');
 const app = express();
 const templatepath = path.join(__dirname, '../templates');
 
-// Multer setup for file uploads
 const upload = multer({ dest: 'uploads/' });
 
-// Session configuration
 app.use(session({
     secret: 'your-secret-key',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } // Set to true for HTTPS
+    cookie: { secure: false }
 }));
 
 app.use(express.json());
@@ -26,7 +24,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.set('view engine', 'hbs');
 app.set('views', templatepath);
 
-// Middleware to ensure authentication
 const ensureAuthenticated = (req, res, next) => {
     if (req.session && req.session.userId) {
         next();
@@ -35,7 +32,6 @@ const ensureAuthenticated = (req, res, next) => {
     }
 };
 
-// Routes
 app.get('/', (req, res) => {
     res.redirect('/login');
 });
@@ -77,16 +73,16 @@ app.post('/signup/contributor', async (req, res) => {
 
     try {
         await Contributor.create({ name, password });
-        res.redirect('/signup-success'); // Redirect to a success page
+        res.redirect('/signup-success');
     } catch (error) {
         console.error('Error during signup:', error);
-        res.redirect('/signup/contributor?error=signup'); // Redirect back with an error query parameter
+        res.redirect('/signup/contributor?error=signup');
     }
 });
 
 app.post('/signup/investor', upload.single('idProof'), async (req, res) => {
     const { name, mobile, email, company } = req.body;
-    const idProof = req.file.path; // Path to the uploaded file
+    const idProof = req.file.path;
 
     try {
         await Investor.create({ name, mobile, email, company, idProof });
@@ -104,16 +100,15 @@ app.post('/login', async (req, res) => {
         let user;
         let userType;
 
-        // Check user type and find user
         user = await Admin.findOne({ name });
         if (user) {
             userType = 'Admin';
         } else {
-            user = await Contributor.findOne({ name, password }); // Match name and password
+            user = await Contributor.findOne({ name, password });
             if (user) {
                 userType = 'Contributor';
             } else {
-                user = await Investor.findOne({ name, password }); // Match name and password
+                user = await Investor.findOne({ name, password });
                 if (user) {
                     userType = 'Investor';
                 }
@@ -121,10 +116,10 @@ app.post('/login', async (req, res) => {
         }
 
         if (user) {
-            req.session.userId = user._id; // Store user ID in session
+            req.session.userId = user._id;
             switch (userType) {
                 case 'Admin':
-                    res.redirect('/admin-home'); // Redirect to Admin's home page
+                    res.redirect('/admin-home');
                     break;
                 case 'Contributor':
                     res.redirect('/ideaconhome');
@@ -154,13 +149,11 @@ app.get('/ideaconhome', ensureAuthenticated, (req, res) => {
 
 app.get('/investorshome', ensureAuthenticated, async (req, res) => {
     try {
-        // Fetch all ideas from the database with populated contributor and sector data
         const ideas = await Idea.find({})
-            .populate('contributorId', 'name') // Populate contributor name
-            .populate('sectorId', 'name')      // Populate sector name
+            .populate('contributorId', 'name')
+            .populate('sectorId', 'name')
             .exec();
 
-        // Render the view with the ideas data
         res.render('investorshome', { ideas });
     } catch (error) {
         console.error('Error fetching ideas for investors:', error);
@@ -168,15 +161,13 @@ app.get('/investorshome', ensureAuthenticated, async (req, res) => {
     }
 });
 
-// Route to display idea posting form
 app.get('/post-idea', ensureAuthenticated, (req, res) => {
-    res.render('post-idea'); // Render the Handlebars template for posting ideas
+    res.render('post-idea');
 });
 
-// Handle idea submission
 app.post('/post-idea', ensureAuthenticated, async (req, res) => {
     const { sectorId, problemStatement } = req.body;
-    const contributorId = req.session.userId; // Get contributor ID from session
+    const contributorId = req.session.userId;
 
     try {
         await Idea.create({ contributorId, sectorId, problemStatement });
@@ -187,18 +178,16 @@ app.post('/post-idea', ensureAuthenticated, async (req, res) => {
     }
 });
 
-// Route to display ideas posted by the logged-in contributor
 app.get('/my-ideas', ensureAuthenticated, async (req, res) => {
     try {
         const ideas = await Idea.find({ contributorId: req.session.userId });
-        res.render('my-ideas', { ideas }); // Render the view with ideas data
+        res.render('my-ideas', { ideas });
     } catch (error) {
         console.error('Error fetching ideas:', error);
         res.status(500).send('Error fetching ideas');
     }
 });
 
-// Route to display edit form
 app.get('/edit-idea/:id', ensureAuthenticated, async (req, res) => {
     const { id } = req.params;
 
@@ -215,7 +204,6 @@ app.get('/edit-idea/:id', ensureAuthenticated, async (req, res) => {
     }
 });
 
-// Handle idea update
 app.post('/update-idea/:id', ensureAuthenticated, async (req, res) => {
     const { id } = req.params;
     const { sectorId, problemStatement } = req.body;
@@ -225,11 +213,10 @@ app.post('/update-idea/:id', ensureAuthenticated, async (req, res) => {
         const idea = await Idea.findOne({ _id: id, contributorId: contributorId });
 
         if (idea) {
-            // Update idea fields
             idea.sectorId = sectorId;
             idea.problemStatement = problemStatement;
 
-            await idea.save(); // Save the updated idea
+            await idea.save();
 
             res.send('Idea updated successfully.');
         } else {
@@ -241,7 +228,6 @@ app.post('/update-idea/:id', ensureAuthenticated, async (req, res) => {
     }
 });
 
-// Handle idea deletion
 app.post('/delete-idea/:id', ensureAuthenticated, async (req, res) => {
     const { id } = req.params;
     const contributorId = req.session.userId;
