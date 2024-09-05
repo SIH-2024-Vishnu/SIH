@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Investor Approvals</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-10 rounded-xl shadow-2xl w-full max-w-5xl transform transition-all duration-500 hover:scale-105">
+        <h1 class="text-4xl font-extrabold mb-8 text-center text-gray-800">Approved Investors</h1>
+
+        <!-- Approved Investors Table -->
+        <table class="min-w-full table-auto bg-white shadow-lg rounded-lg overflow-hidden">
+            <thead class="bg-green-600 text-white">
+                <tr>
+                    <th class="px-6 py-3 text-left text-lg font-semibold" scope="col">Investor Name</th>
+                    <th class="px-6 py-3 text-left text-lg font-semibold" scope="col">Email</th>
+                    <th class="px-6 py-3 text-left text-lg font-semibold" scope="col">Company</th>
+                    <th class="px-6 py-3 text-left text-lg font-semibold" scope="col">Date Approved</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each investors}}
+                <tr class="bg-gray-100 border-b hover:bg-gray-200">
+                    <td class="px-6 py-4">{{this.name}}</td>
+                    <td class="px-6 py-4">{{this.email}}</td>
+                    <td class="px-6 py-4">{{this.company}}</td>
+                    <td class="px-6 py-4">{{this.dateApproved}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

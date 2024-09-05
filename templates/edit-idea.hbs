@@ -11,9 +11,15 @@
         <h1 class="text-4xl font-extrabold mb-8 text-center text-gray-800">Edit Idea</h1>
         <form action="/update-idea/{{idea._id}}" method="POST">
             <div class="mb-6">
-                <label for="sector" class="block text-lg font-medium text-gray-700">Sector:</label>
-                <input type="text" id="sector" name="sector" value="{{idea.sector}}" required 
-                class="block w-full mt-2 px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-base">
+                <label for="sectorId" class="block text-lg font-medium text-gray-700">Sector:</label>
+                <select id="sectorId" name="sectorId" required
+                    class="block w-full mt-2 px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-base">
+                    {{#each sectors}}
+                        <option value="{{this._id}}" {{#ifCond this._id '==' ../idea.sectorId._id}}selected{{/ifCond}}>
+                            {{this.name}}
+                        </option>
+                    {{/each}}
+                </select>
             </div>
             <div class="mb-6">
                 <label for="problemStatement" class="block text-lg font-medium text-gray-700">Problem Statement:</label>
