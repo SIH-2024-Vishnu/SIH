@@ -14,12 +14,12 @@ const templatePath = path.join(__dirname, '../templates');
 
 const upload = multer({ dest: 'uploads/' });
 
-
+// Session configuration
 app.use(session({
     secret: 'your-secret-key',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false } // Set to true if using HTTPS
+    cookie: { secure: false } // Set to true for HTTPS
 }));
 
 app.use(express.json());
@@ -28,7 +28,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.set('view engine', 'hbs');
 app.set('views', templatePath);
 
-// Middleware to check authentication
+// Middleware to ensure authentication
 const ensureAuthenticated = (req, res, next) => {
     if (req.session && req.session.userId) {
         next();
@@ -37,7 +37,6 @@ const ensureAuthenticated = (req, res, next) => {
     }
 };
 
-// Routes
 app.get('/', (req, res) => {
     res.redirect('/login');
 });
@@ -167,44 +166,29 @@ app.get('/investorshome', ensureAuthenticated, async (req, res) => {
     }
 });
 
-app.get('/post-idea', ensureAuthenticated, async (req, res) => {
-    try {
-        const sectors = await Sector.find(); // Fetch sectors for the form
-        res.render('post-idea', { sectors });
-    } catch (error) {
-        console.error('Error fetching sectors:', error);
-        res.status(500).send('Error fetching sectors');
-    }
+// Route to display idea posting form
+app.get('/post-idea', ensureAuthenticated, (req, res) => {
+    res.render('post-idea'); // Render the Handlebars template for posting ideas
 });
 
+// Handle idea submission
 app.post('/post-idea', ensureAuthenticated, async (req, res) => {
     const { sectorId, problemStatement } = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(sectorId) || !sectorId) {
-        console.error('Invalid Sector ID:', sectorId);
-        return res.redirect('/post-idea');
-    }
+    const contributorId = req.session.userId; // Get contributor ID from session
 
     try {
-        const idea = new Idea({
-            contributorId: req.session.userId,
-            sectorId,
-            problemStatement
-        });
-        await idea.save();
-        res.redirect('/my-ideas');
-    } catch (err) {
-        console.error('Error submitting idea:', err);
-        res.redirect('/post-idea');
+        await Idea.create({ contributorId, sectorId, problemStatement });
+        res.send('Idea posted successfully.');
+    } catch (error) {
+        console.error('Error during idea submission:', error);
+        res.status(500).send('Error during idea submission');
     }
 });
 
 app.get('/my-ideas', ensureAuthenticated, async (req, res) => {
     try {
-        const ideas = await Idea.find({ contributorId: req.session.userId })
-            .populate('sectorId', 'name')
-            .exec();
-        res.render('my-ideas', { ideas });
+        const ideas = await Idea.find({ contributorId: req.session.userId });
+        res.render('my-ideas', { ideas }); // Render the view with ideas data
     } catch (error) {
         console.error('Error fetching ideas:', error);
         res.status(500).send('Error fetching ideas');
