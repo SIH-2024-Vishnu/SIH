@@ -10,9 +10,24 @@
     <div class="bg-white p-10 rounded-lg shadow-2xl transform transition-all duration-500 hover:scale-105 w-full max-w-lg">
         <h1 class="text-4xl font-extrabold mb-8 text-center text-gray-800">Post an Idea</h1>
         <form action="/post-idea" method="POST" class="space-y-6">
+            <!-- Dropdown for sector selection -->
             <div class="mb-4">
-                <label for="sector" class="block text-lg font-medium text-gray-700">Sector:</label>
-                <input type="text" id="sector" name="sector" required class="block w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-500 sm:text-base transition duration-300 ease-in-out transform hover:scale-105">
+                <label for="sectorId" class="block text-lg font-medium text-gray-700">Sector:</label>
+                <select id="sectorId" name="sectorId" required class="block w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-500 sm:text-base transition duration-300 ease-in-out transform hover:scale-105">
+                    <option value="">Select a sector</option>
+                    <option value="60d5f0b2d38e5b1a9c8b4567">Technology</option>
+                    <option value="60d5f0b2d38e5b1a9c8b4568">Health</option>
+                    <option value="60d5f0b2d38e5b1a9c8b4569">Finance</option>
+                    <option value="60d5f0b2d38e5b1a9c8b4570">Education</option>
+                    <option value="60d5f0b2d38e5b1a9c8b4571">Agriculture</option>
+                    <option value="60d5f0b2d38e5b1a9c8b4572">Entertainment</option>
+                    <option value="60d5f0b2d38e5b1a9c8b4573">Travel</option>
+                    <option value="60d5f0b2d38e5b1a9c8b4574">Retail</option>
+                    <option value="60d5f0b2d38e5b1a9c8b4575">Automotive</option>
+                    <option value="60d5f0b2d38e5b1a9c8b4576">Real Estate</option>
+                    <option value="60d5f0b2d38e5b1a9c8b4577">Energy</option>
+                    <!-- Add more sectors as needed -->
+                </select>
             </div>
             <div class="mb-4">
                 <label for="problemStatement" class="block text-lg font-medium text-gray-700">Problem Statement:</label>
