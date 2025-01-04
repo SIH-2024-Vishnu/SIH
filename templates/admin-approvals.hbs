@@ -26,7 +26,7 @@
                     <td class="px-6 py-4">{{this.name}}</td>
                     <td class="px-6 py-4">{{this.email}}</td>
                     <td class="px-6 py-4">{{this.company}}</td>
-                    <td class="px-6 py-4">{{this.dateApproved}}</td>
+                    <td class="px-6 py-4">{{formatDate this.dateApproved}}</td> <!-- Use a Handlebars helper for date formatting -->
                 </tr>
                 {{/each}}
             </tbody>

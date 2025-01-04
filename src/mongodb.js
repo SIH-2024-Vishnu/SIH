@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
-
-// Connect to MongoDB
+ 
+mongoose.set('strictQuery', false);
+ 
 mongoose.connect('mongodb://localhost:27017/LoginSignup')
+
 
 const db = mongoose.connection;
 
@@ -12,47 +14,45 @@ db.on('error', (err) => {
 db.once('open', () => {
     console.log('Connected to MongoDB');
 });
-
-// Contributor Schema
+ 
 const contributorSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true },
     password: { type: String, required: true }
 });
 
 const Contributor = mongoose.model('Contributor', contributorSchema);
-
-// Investor Schema
+ 
 const investorSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true },
-    mobile: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    company: { type: String, required: true },
-    idProof: { type: String, required: true },
-    username: { type: String, unique: true }, // For admin to assign
-    password: { type: String },               // For admin to assign
-    credentialsAssigned: { type: Boolean, default: false } // Tracks if credentials are assigned
+    mobile: { type: String, unique: true, sparse: true },  
+    email: { type: String, unique: true, sparse: true },  
+    company: String,
+    idProof: String,  
+    username: { type: String, unique: true, sparse: true }, 
+    password: String,  
+    credentialsAssigned: { type: Boolean, default: false }
 });
 
 const Investor = mongoose.model('Investor', investorSchema);
 
-// Admin Schema
+ 
 const adminSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true }
 });
 
 const Admin = mongoose.model('Admin', adminSchema);
 
-// Sector Schema
+ 
 const sectorSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true }
 });
 
 const Sector = mongoose.model('Sector', sectorSchema);
 
-// Idea Schema
+ 
 const ideaSchema = new mongoose.Schema({
     contributorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Contributor', required: true },
-    sectorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Sector', required: true },
+    sectorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Sector', required: false },
     problemStatement: { type: String, required: true },
     datePosted: { type: Date, default: Date.now }
 });

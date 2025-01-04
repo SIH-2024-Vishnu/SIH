@@ -10,19 +10,9 @@ const { Contributor, Investor, Admin, Idea, Sector } = require('./mongodb');
 const app = express();
 const templatePath = path.join(__dirname, '../templates');
 
-const upload = multer({ dest: 'uploads/' });
-
-hbs.registerHelper('eq', function (a, b, options) {
-    if (a === b) {
-        return options.fn(this); // This runs the block
-    } else {
-        return options.inverse(this); // This runs the inverse block
-    }
-});
-
 // Middleware configuration
 app.use(session({
-    secret: 'your-secret-key',
+    secret: 'VeryStrongSecretKey!@#123',
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false } // Change to `true` if using HTTPS
@@ -30,6 +20,7 @@ app.use(session({
 
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use('/uploads', express.static('uploads'));
 
 // Set up Handlebars as the view engine
 app.set('view engine', 'hbs');
@@ -43,6 +34,30 @@ const ensureAuthenticated = (req, res, next) => {
         res.redirect('/login');
     }
 };
+
+// Setup multer for file uploads
+const upload = multer({
+    dest: 'uploads/', 
+    limits: { fileSize: 1024 * 1024 * 5 }, // 5 MB file size limit
+    fileFilter(req, file, cb) {
+        if (!file.originalname.match(/\.(jpg|jpeg|png|pdf)$/)) {
+            return cb(new Error('Only image or PDF files are allowed'));
+        }
+        cb(null, true);
+    }
+});
+
+// Register the 'eq' helper
+hbs.registerHelper('eq', function (a, b, options) {
+    if (a === b) {
+        return options.fn(this); // This runs the block
+    } else {
+        return options.inverse(this); // This runs the inverse block
+    }
+});
+hbs.registerHelper('simple', function (value) {
+    return value ? 'True' : 'False';
+});
 
 // Route handlers
 app.get('/', (req, res) => {
@@ -93,26 +108,26 @@ app.post('/signup/contributor', async (req, res) => {
     }
 });
 
-app.post('/signup/investor', upload.single('idProof'), async (req, res) => {
+app.post("/signup/investor", upload.single('idProof'), async (req, res) => {
     const { name, mobile, email, company } = req.body;
-    const idProof = req.file.path;
+    const idProof = req.file ? req.file.path : '';
 
     try {
-        await Investor.create({ name, mobile, email, company, idProof, isApproved: false });
-        res.send('Signup successful. Admin will review your information and assign login credentials.');
+        // Ensure no 'username' field is included initially
+        await Investor.create({ name, mobile, email, company, idProof });
+
+        res.redirect('/signup-success');
     } catch (error) {
-        if (error.code === 11000) {
-            if (error.keyPattern.name) {
-                res.send('An investor with this name already exists. Please choose a different name.');
-            } else if (error.keyPattern.email) {
-                res.send('An investor with this email already exists. Please use a different email.');
-            }
+        if (error.code === 11000 && error.keyPattern && error.keyPattern.username) {
+            // Handle duplicate key error for the 'username' field
+            res.redirect('/signup/investor?error=duplicateusername');
         } else {
-            console.error('Error during signup:', error);
-            res.send('Error during signup');
+            console.error("Error during signup:", error);
+            res.redirect('/signup/investor?error=signup');
         }
     }
 });
+
 
 app.post('/login', async (req, res) => {
     const { name, password } = req.body;
@@ -160,30 +175,9 @@ app.post('/login', async (req, res) => {
     }
 });
 
-app.get('/home', (req, res) => {
-    res.render('home');
-});
-
+// Contributor routes
 app.get('/ideaconhome', ensureAuthenticated, (req, res) => {
     res.render('ideaconhome');
-});
-
-app.get('/adminhome', ensureAuthenticated, (req, res) => {
-    res.render('adminhome');
-});
-
-app.get('/investorshome', ensureAuthenticated, async (req, res) => {
-    try {
-        const ideas = await Idea.find({})
-            .populate('contributorId', 'name')
-            .populate('sectorId', 'name')
-            .exec();
-
-        res.render('investorshome', { ideas });
-    } catch (error) {
-        console.error('Error fetching ideas for investors:', error);
-        res.status(500).send('Error fetching ideas');
-    }
 });
 
 app.get('/post-idea', ensureAuthenticated, async (req, res) => {
@@ -230,23 +224,19 @@ app.get('/my-ideas', ensureAuthenticated, async (req, res) => {
     }
 });
 
-app.get('/edit-idea/:id', ensureAuthenticated, async (req, res) => {
-    const { id } = req.params;
-
+app.get('/edit-idea/:id', async (req, res) => {
     try {
-        const idea = await Idea.findOne({ _id: id, contributorId: req.session.userId })
-            .populate('sectorId', 'name');
-        if (idea) {
-            const sectors = await Sector.find(); // Fetch sectors for the form
-            res.render('edit-idea', { idea, sectors });
-        } else {
-            res.status(404).send('Idea not found or you do not have permission to edit this idea.');
-        }
-    } catch (error) {
-        console.error('Error fetching idea for editing:', error);
-        res.status(500).send('Error fetching idea');
+        const idea = await Idea.findById(req.params.id).populate('sectorId');
+        const sectors = await Sector.find();
+        res.render('edit-idea', {
+            idea: idea,
+            sectors: sectors
+        });
+    } catch (err) {
+        res.status(500).send(err.message);
     }
 });
+
 
 app.post('/update-idea/:id', ensureAuthenticated, async (req, res) => {
     const { id } = req.params;
@@ -261,7 +251,7 @@ app.post('/update-idea/:id', ensureAuthenticated, async (req, res) => {
 
             await idea.save();
 
-            res.send('Idea updated successfully.');
+            res.redirect('/my-ideas');
         } else {
             res.status(404).send('Idea not found or you do not have permission to update this idea.');
         }
@@ -278,7 +268,7 @@ app.post('/delete-idea/:id', ensureAuthenticated, async (req, res) => {
         const result = await Idea.deleteOne({ _id: id, contributorId: req.session.userId });
 
         if (result.deletedCount > 0) {
-            res.send('Idea deleted successfully.');
+            res.redirect('/my-ideas');
         } else {
             res.status(404).send('Idea not found or you do not have permission to delete this idea.');
         }
@@ -288,8 +278,27 @@ app.post('/delete-idea/:id', ensureAuthenticated, async (req, res) => {
     }
 });
 
-// Admin panel to view investor signups
-app.get('/admin/investors', async (req, res) => {
+// Investor routes
+app.get('/investorshome', ensureAuthenticated, async (req, res) => {
+    try {
+        const ideas = await Idea.find({})
+            .populate('contributorId', 'name')
+            .populate('sectorId', 'name')
+            .exec();
+
+        res.render('investorshome', { ideas });
+    } catch (error) {
+        console.error('Error fetching ideas for investors:', error);
+        res.status(500).send('Error fetching ideas');
+    }
+});
+
+// Admin routes
+app.get('/adminhome', ensureAuthenticated, (req, res) => {
+    res.render('adminhome');
+});
+
+app.get('/admin/investors', ensureAuthenticated, async (req, res) => {
     try {
         const investors = await Investor.find({ credentialsAssigned: false });
         res.render('admin-investors', { investors });
@@ -299,9 +308,7 @@ app.get('/admin/investors', async (req, res) => {
     }
 });
 
-
-// Assign login credentials to investor
-app.post('/admin/assign-credentials/:id', async (req, res) => {
+app.post('/admin/assign-credentials/:id', ensureAuthenticated, async (req, res) => {
     const { id } = req.params;
     const { username, password } = req.body;
 
@@ -314,12 +321,12 @@ app.post('/admin/assign-credentials/:id', async (req, res) => {
         });
         res.redirect('/admin/investors');
     } catch (err) {
+        console.error('Error assigning credentials:', err);
         res.status(500).send('Error assigning credentials');
     }
 });
 
-// Admin panel to view all investor applications
-app.get('/admin/investor-applications', async (req, res) => {
+app.get('/admin/investor-applications', ensureAuthenticated, async (req, res) => {
     try {
         const investors = await Investor.find();
         res.render('admin-investors', { investors });
@@ -329,7 +336,7 @@ app.get('/admin/investor-applications', async (req, res) => {
     }
 });
 
-app.get('/admin/investor-approvals', async (req, res) => {
+app.get('/admin/investor-approvals', ensureAuthenticated, async (req, res) => {
     try {
         const investors = await Investor.find();
         res.render('admin-approvals', { investors });

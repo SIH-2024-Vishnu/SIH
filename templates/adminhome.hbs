@@ -3,47 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Investor Signup Requests</title>
+    <title>Admin Panel - Home</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-br from-gray-100 to-gray-300 flex items-center justify-center min-h-screen">
     <div class="bg-white p-10 rounded-xl shadow-2xl w-full max-w-5xl transform transition-all duration-500 hover:scale-105">
         <h1 class="text-4xl font-extrabold mb-8 text-center text-gray-800">Welcome Admin</h1>
-
-        <!-- Buttons for Admin Actions -->
         <div class="mb-6 flex justify-between">
             <a href="/admin/investor-applications" class="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-300">View All Investor Applications</a>
             <a href="/admin/investor-approvals" class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">View Investor Approvals</a>
         </div>
-
-        <!-- Investor Requests Table -->
-        <table class="min-w-full table-auto bg-white shadow-lg rounded-lg overflow-hidden">
-            <thead class="bg-indigo-600 text-white">
-                <tr>
-                    <th class="px-6 py-3 text-left text-lg font-semibold" scope="col">Investor Name</th>
-                    <th class="px-6 py-3 text-left text-lg font-semibold" scope="col">Email</th>
-                    <th class="px-6 py-3 text-left text-lg font-semibold" scope="col">Date Signed Up</th>
-                    <th class="px-6 py-3 text-left text-lg font-semibold" scope="col">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{#each investors}}
-                <tr class="bg-gray-100 border-b hover:bg-gray-200">
-                    <td class="px-6 py-4">{{this.name}}</td>
-                    <td class="px-6 py-4">{{this.email}}</td>
-                    <td class="px-6 py-4">{{this.dateSignedUp}}</td>
-                    <td class="px-6 py-4">
-                        <!-- Form to assign credentials to the investor -->
-                        <form action="/admin/assign-credentials/{{this._id}}" method="POST" class="space-y-2">
-                            <input type="text" name="username" placeholder="Username" class="block w-full px-4 py-2 border border-gray-300 rounded-lg" required>
-                            <input type="password" name="password" placeholder="Password" class="block w-full px-4 py-2 border border-gray-300 rounded-lg" required>
-                            <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg mt-2 hover:bg-indigo-700 transition duration-300">Allot Credentials</button>
-                        </form>
-                    </td>
-                </tr>
-                {{/each}}
-            </tbody>
-        </table>
+        <!-- You can add more content here if needed -->
     </div>
 </body>
 </html>
